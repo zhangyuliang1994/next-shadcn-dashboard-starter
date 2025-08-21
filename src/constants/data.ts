@@ -18,6 +18,7 @@ export const navItems: NavItem[] = [
     url: '/dashboard/overview',
     icon: 'dashboard',
     isActive: false,
+    disabled: false,
     shortcut: ['d', 'd'],
     items: [] // Empty array as there are no child items for Dashboard
   },
@@ -27,20 +28,53 @@ export const navItems: NavItem[] = [
     icon: 'product',
     shortcut: ['p', 'p'],
     isActive: false,
+    disabled: false,
     items: [] // No child items
+  },
+  {
+    title: '模拟器管理',
+    url: '#', // Placeholder as there is no direct link for the parent
+    icon: 'simulator',
+    shortcut: ['s', 's'],
+    isActive: true,
+    disabled: false,
+    items: [
+      {
+        title: '实例管理',
+        url: '/dashboard/simulator/instances',
+        icon: 'server',
+        shortcut: ['s', 'i'],
+        disabled: false
+      },
+      {
+        title: '主站板卡管理',
+        url: '/dashboard/simulator/devices',
+        icon: 'device',
+        shortcut: ['s', 'd'],
+        disabled: false
+      },
+      {
+        title: '小站管理',
+        url: '/dashboard/simulator/stations',
+        icon: 'station',
+        shortcut: ['s', 's'],
+        disabled: false
+      }
+    ]
   },
   {
     title: 'Account',
     url: '#', // Placeholder as there is no direct link for the parent
     icon: 'billing',
-    isActive: true,
-
+    isActive: false,
+    disabled: false,
     items: [
       {
         title: 'Profile',
         url: '/dashboard/profile',
         icon: 'userPen',
-        shortcut: ['m', 'm']
+        shortcut: ['m', 'm'],
+        disabled: false
       }
     ]
   },
@@ -50,6 +84,7 @@ export const navItems: NavItem[] = [
     icon: 'kanban',
     shortcut: ['k', 'k'],
     isActive: false,
+    disabled: false,
     items: [] // No child items
   }
 ];
