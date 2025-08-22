@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildApiUrl, API_ENDPOINTS } from '@/config/api';
 
-export async function POST(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const body = await request.json();
+    const { id } = await params;
 
     const response = await fetch(
-      buildApiUrl(API_ENDPOINTS.INSTANCE.QUERY_PAGE),
+      buildApiUrl(API_ENDPOINTS.INSTANCE.GET_BY_ID(id)),
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
+        }
       }
     );
 

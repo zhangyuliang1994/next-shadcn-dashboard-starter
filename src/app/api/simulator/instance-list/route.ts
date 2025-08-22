@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_BASE_URL = 'http://127.0.0.1:9527/cm-simulator/api/v1';
+import { buildApiUrl, API_ENDPOINTS } from '@/config/api';
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${API_BASE_URL}/instance/list`, {
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.INSTANCE.LIST), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'

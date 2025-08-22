@@ -5,27 +5,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // 构建请求体，如果没有instanceId则不传递该字段
-    const requestBody: any = {
-      pageNum: body.pageNum,
-      pageSize: body.pageSize
-    };
-
-    // 只有当instanceId存在且不为空时才添加到请求体中
-    if (
-      body.instanceId !== undefined &&
-      body.instanceId !== null &&
-      body.instanceId !== ''
-    ) {
-      requestBody.instanceId = body.instanceId;
-    }
-
-    const response = await fetch(buildApiUrl(API_ENDPOINTS.DEVICE.QUERY_PAGE), {
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.INSTANCE.ADD), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -36,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Device API proxy error:', error);
+    console.error('API proxy error:', error);
     return NextResponse.json(
       {
         code: '500',

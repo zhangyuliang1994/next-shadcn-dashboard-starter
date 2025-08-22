@@ -17,8 +17,16 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { IconRefresh, IconLoader2 } from '@tabler/icons-react';
+import {
+  IconRefresh,
+  IconLoader2,
+  IconPlus,
+  IconPencil,
+  IconEye
+} from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
+import InstanceForm, { SimulatorInstance } from '@/components/instance-form';
+import { toast } from 'sonner';
 
 // API响应数据类型定义
 interface ApiResponse<T> {
@@ -31,14 +39,11 @@ interface ApiResponse<T> {
   cause: string | null;
 }
 
-interface SimulatorInstance {
-  id: number;
-  httpPort: number | null;
-  httpIp: string;
-  enable: boolean;
-  remark: string | null;
-  createTime: string;
-  updateTime: string | null;
+interface SingleApiResponse<T> {
+  data: T;
+  code: string;
+  msg: string;
+  cause: string | null;
 }
 
 // API调用函数
@@ -64,6 +69,62 @@ const fetchInstances = async (
   return await response.json();
 };
 
+// 获取单个实例
+const fetchInstance = async (
+  id: number
+): Promise<SingleApiResponse<SimulatorInstance>> => {
+  const response = await fetch(`/api/simulator/instance/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// 添加实例
+const addInstance = async (
+  instance: SimulatorInstance
+): Promise<SingleApiResponse<SimulatorInstance>> => {
+  const response = await fetch('/api/simulator/instance/add', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(instance)
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// 编辑实例
+const editInstance = async (
+  instance: SimulatorInstance
+): Promise<SingleApiResponse<SimulatorInstance>> => {
+  const response = await fetch('/api/simulator/instance/edit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(instance)
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
 export default function InstanceManagementPage() {
   const [instances, setInstances] = useState<SimulatorInstance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +132,13 @@ export default function InstanceManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // 表单相关状态
+  const [formOpen, setFormOpen] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [editingInstance, setEditingInstance] = useState<
+    SimulatorInstance | undefined
+  >(undefined);
 
   // 加载实例数据
   const loadInstances = async (page: number = currentPage) => {
@@ -90,6 +158,93 @@ export default function InstanceManagementPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 处理查看实例
+  const handleViewInstance = async (id: number) => {
+    try {
+      setFormLoading(true);
+      const response = await fetchInstance(id);
+
+      if (response.code === '200') {
+        setEditingInstance(response.data);
+        setFormOpen(true);
+      } else {
+        toast.error(response.msg || '获取实例详情失败');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '网络请求失败');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // 处理编辑实例
+  const handleEditInstance = async (id: number) => {
+    try {
+      setFormLoading(true);
+      const response = await fetchInstance(id);
+
+      if (response.code === '200') {
+        setEditingInstance(response.data);
+        setFormOpen(true);
+      } else {
+        toast.error(response.msg || '获取实例详情失败');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '网络请求失败');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // 处理添加新实例
+  const handleAddInstance = () => {
+    setEditingInstance(undefined);
+    setFormOpen(true);
+  };
+
+  // 处理表单提交
+  const handleFormSubmit = async (instanceData: SimulatorInstance) => {
+    try {
+      setFormLoading(true);
+
+      if (instanceData.id) {
+        // 编辑现有实例
+        const response = await editInstance(instanceData);
+
+        if (response.code === '200') {
+          toast.success('实例编辑成功');
+          setFormOpen(false);
+          setEditingInstance(undefined);
+          await loadInstances();
+        } else {
+          toast.error(response.msg || '编辑实例失败');
+        }
+      } else {
+        // 添加新实例
+        const response = await addInstance(instanceData);
+
+        if (response.code === '200') {
+          toast.success('实例添加成功');
+          setFormOpen(false);
+          setEditingInstance(undefined);
+          await loadInstances();
+        } else {
+          toast.error(response.msg || '添加实例失败');
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '操作失败');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // 处理表单关闭
+  const handleFormClose = () => {
+    setFormOpen(false);
+    setEditingInstance(undefined);
   };
 
   // 页面加载时获取数据
@@ -116,14 +271,24 @@ export default function InstanceManagementPage() {
               管理和查看模拟器实例信息
             </p>
           </div>
-          <Button onClick={() => loadInstances()} disabled={loading}>
-            {loading ? (
-              <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
-            ) : (
-              <IconRefresh className='mr-2 h-4 w-4' />
-            )}
-            {loading ? '加载中...' : '刷新数据'}
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button onClick={handleAddInstance} disabled={loading}>
+              <IconPlus className='mr-2 h-4 w-4' />
+              添加实例
+            </Button>
+            <Button
+              variant='outline'
+              onClick={() => loadInstances()}
+              disabled={loading}
+            >
+              {loading ? (
+                <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+              ) : (
+                <IconRefresh className='mr-2 h-4 w-4' />
+              )}
+              {loading ? '加载中...' : '刷新数据'}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -173,6 +338,14 @@ export default function InstanceManagementPage() {
           ) : instances.length === 0 ? (
             <div className='py-12 text-center'>
               <p className='text-muted-foreground text-lg'>暂无实例数据</p>
+              <Button
+                variant='outline'
+                className='mt-4'
+                onClick={handleAddInstance}
+              >
+                <IconPlus className='mr-2 h-4 w-4' />
+                添加第一个实例
+              </Button>
             </div>
           ) : (
             <>
@@ -196,7 +369,7 @@ export default function InstanceManagementPage() {
                       <TableHead className='w-[180px] font-semibold'>
                         创建时间
                       </TableHead>
-                      <TableHead className='w-[120px] text-center font-semibold'>
+                      <TableHead className='w-[160px] text-center font-semibold'>
                         操作
                       </TableHead>
                     </TableRow>
@@ -244,13 +417,26 @@ export default function InstanceManagementPage() {
                           </span>
                         </TableCell>
                         <TableCell className='text-center'>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            className='text-xs'
-                          >
-                            管理
-                          </Button>
+                          <div className='flex items-center justify-center gap-1'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='h-8 w-8 p-0'
+                              onClick={() => handleViewInstance(instance.id!)}
+                              title='查看详情'
+                            >
+                              <IconEye className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='h-8 w-8 p-0'
+                              onClick={() => handleEditInstance(instance.id!)}
+                              title='编辑实例'
+                            >
+                              <IconPencil className='h-4 w-4' />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -303,6 +489,15 @@ export default function InstanceManagementPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 实例表单对话框 */}
+      <InstanceForm
+        isOpen={formOpen}
+        onClose={handleFormClose}
+        onSubmit={handleFormSubmit}
+        initialData={editingInstance}
+        isLoading={formLoading}
+      />
     </div>
   );
 }

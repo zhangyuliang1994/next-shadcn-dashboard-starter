@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_BASE_URL = 'http://127.0.0.1:9527/cm-simulator/api/v1';
+import { buildApiUrl, API_ENDPOINTS } from '@/config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,13 +20,16 @@ export async function POST(request: NextRequest) {
       requestBody.instanceId = body.instanceId;
     }
 
-    const response = await fetch(`${API_BASE_URL}/rcstInfo/queryPage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.STATION.QUERY_PAGE),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
